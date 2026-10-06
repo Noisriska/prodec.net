@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAINEL CENTRAL DE PRODUÇÃO</title>
+    <style>
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-card: #1a1a1a;
+            --bg-hover: #252525;
+            --gold: #ffd700;
+            --green: #4CAF50;
+            --red: #f44336;
+            --pink: #e91e63;
+            --purple: #9c27b0;
+            --blue: #2196f3;
+            --orange: #ff9800;
+            --cyan: #00bcd4;
+            --text: #f0f0f0;
+            --muted: #888;
+            --border: #333;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: var(--gold);
+            margin-bottom: 1rem;
+            font-size: 2rem;
+        }
+        .busca-op {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--gold);
+        }
+        .busca-op .linha-busca {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .busca-op label {
+            font-weight: 600;
+            color: var(--gold);
+        }
+        .busca-op input[type="text"] {
+            flex: 1;
+            min-width: 220px;
+            padding: 0.75rem 1rem;
+            background: #252525;
+            border: 2px solid var(--gold);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+        }
+        .busca-op button {
+            padding: 0.75rem 1.5rem;
+            background: var(--gold);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .busca-op button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+        }
+        .resultado-busca {
+            margin-top: 1rem;
+            padding: 1.5rem;
+            background: #151515;
+            border-radius: 6px;
+            border-left: 3px solid var(--gold);
+            display: none;
+        }
+        .resultado-busca.visivel {
+            display: block;
+        }
+        .resultado-busca .linha {
+            margin: 0.5rem 0;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+        }
+        .resultado-busca .rot {
+            color: var(--muted);
+            display: inline-block;
+            width: 160px;
+        }
+        .tempo-producao {
+            color: var(--gold);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .nao-encontrada {
+            color: var(--red);
+            font-weight: 600;
+        }
+        .status-busca {
+            display: inline-block;
+            padding: 0.3rem 1rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: none;
+        }
+        .status-pulmao { background: var(--blue); color: white; }
+        .status-producao { background: var(--orange); color: white; }
+        .status-concluida { background: var(--green); color: white; }
+        .status-desconhecido { background: #555; color: white; }
+        .grid-principal {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .grid-setores {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+        .card {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            transition: 0.2s;
+        }
+        .card:hover {
+            border-color: var(--gold);
+            transform: translateY(-2px);
+        }
+        .card-link {
+            cursor: pointer;
+        }
+        .numero {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .rotulo {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .secao-titulo {
+            font-size: 1.1rem;
+            color: var(--gold);
+            margin: 2rem 0 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .cor-pintura { color: var(--pink); }
+        .cor-sublimacao { color: var(--purple); }
+        .cor-polim { color: var(--orange); }
+        .cor-polia { color: var(--blue); }
+        .cor-jateado { color: var(--cyan); }
+        .cor-escovado { color: #8bc34a; }
+        .cor-anodizacao { color: #795548; }
+        .cor-tinta { color: var(--red); }
+        .cor-total { color: var(--green); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏭 PAINEL CENTRAL DE PRODUÇÃO</h1>
+        <div class="busca-op">
+            <div class="linha-busca">
+                <label for="busca-op-input">🔍 Localizar OP:</label>
+                <input type="text" id="busca-op-input" placeholder="Digite o número da OP...">
+                <button id="btn-buscar" onclick="buscarOP()">Buscar</button>
+            </div>
+            <div class="resultado-busca" id="resultado-busca"></div>
+        </div>
+        <div class="grid-principal">
+            <div class="card">
+                <div class="numero cor-total" id="card-total">0</div>
+                <div class="rotulo">TOTAL DE OPs</div>
+            </div>
+            <div class="card">
+                <div class="numero" id="card-conferencia">0</div>
+                <div class="rotulo">CONFERÊNCIA / ESTOQUE</div>
+            </div>
+            <div class="card">
+                <div class="numero" id="card-producao">0</div>
+                <div class="rotulo">EM PRODUÇÃO</div>
+            </div>
+            <div class="card">
+                <div class="numero" id="card-concluidas">0</div>
+                <div class="rotulo">CONCLUÍDAS</div>
+            </div>
+        </div>
+        <h2 class="secao-titulo">📋 OPs no Pulmão por Setor</h2>
+        <div class="grid-setores">
+            <div class="card card-link" onclick="irPara('pintura')">
+                <div class="numero cor-pintura" id="pulmao-pintura">0</div>
+                <div class="rotulo">Pintura</div>
+            </div>
+            <div class="card card-link" onclick="irPara('sublimacao')">
+                <div class="numero cor-sublimacao" id="pulmao-sublimacao">0</div>
+                <div class="rotulo">Sublimação</div>
+            </div>
+            <div class="card card-link" onclick="irPara('polimento-manual')">
+                <div class="numero cor-polim" id="pulmao-polimento-manual">0</div>
+                <div class="rotulo">Polimento Manual</div>
+            </div>
+            <div class="card card-link" onclick="irPara('polimento-automatico')">
+                <div class="numero cor-polia" id="pulmao-polimento-automatico">0</div>
+                <div class="rotulo">Polimento Automático</div>
+            </div>
+            <div class="card card-link" onclick="irPara('jateado')">
+                <div class="numero cor-jateado" id="pulmao-jateado">0</div>
+                <div class="rotulo">Jateado</div>
+            </div>
+            <div class="card card-link" onclick="irPara('escovado')">
+                <div class="numero cor-escovado" id="pulmao-escovado">0</div>
+                <div class="rotulo">Escovado</div>
+            </div>
+            <div class="card card-link" onclick="irPara('anodizacao')">
+                <div class="numero cor-anodizacao" id="pulmao-anodizacao">0</div>
+                <div class="rotulo">Anodização</div>
+            </div>
+            <div class="card card-link" onclick="irPara('tinta-sobre-tinta')">
+                <div class="numero cor-tinta" id="pulmao-tinta-sobre-tinta">0</div>
+                <div class="rotulo">Tinta sobre Tinta</div>
+            </div>
+        </div>
+    </div>
+<script>
+const STORAGE_KEY = 'dados_producao';
+const CANAL = new BroadcastChannel('producao_canal');
+const NOMES_DESTINO = {
+    'pintura': '🎨 Pintura',
+    'sublimacao': '🖼️ Sublimação',
+    'polimento-manual': '✨ Polimento Manual',
+    'polimento-automatico': '✨ Polimento Automático',
+    'jateado': '💨 Jateado',
+    'escovado': '🧹 Escovado',
+    'anodizacao': '⚗️ Anodização',
+    'tinta-sobre-tinta': '🎨 Tinta sobre Tinta'
+};
+function normalizarTexto(texto) {
+    if (!texto) return '';
+    return String(texto).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+function normalizarNumero(num) {
+    if (!num) return '';
+    return String(num).trim().replace(/^0+/, '');
+}
+function carregarDados() {
+    const bruto = localStorage.getItem(STORAGE_KEY);
+    return bruto ? JSON.parse(bruto) : [];
+}
+function calcularTempoProducao(inicioStr, fimStr) {
+    if (!inicioStr || !fimStr || inicioStr === '—' || fimStr === '—') return '—';
+    const limpar = s => s.replace(/,/g, '').replace(/\//g, '-').replace(' ', 'T');
+    const inicio = new Date(limpar(inicioStr));
+    const fim = new Date(limpar(fimStr));
+    if (isNaN(inicio.getTime()) || isNaN(fim.getTime())) return '—';
+    const diffMs = fim - inicio;
+    if (diffMs < 0) return '—';
+    const horas = Math.floor(diffMs / 3600000);
+    const minutos = Math.floor((diffMs % 3600000) / 60000);
+    const segundos = Math.floor((diffMs % 60000) / 1000);
+    if (horas > 0) return `${horas}h ${minutos}m ${segundos}s`;
+    else if (minutos > 0) return `${minutos}m ${segundos}s`;
+    else return `${segundos}s`;
+}
+function obterNomeEtapa(etapa) {
+    const et = normalizarTexto(etapa);
+    if (et === 'separacao') return { texto: 'No Pulmão', classe: 'status-pulmao' };
+    if (et.endsWith('_em_producao')) return { texto: 'Em Produção', classe: 'status-producao' };
+    if (et.endsWith('_concluida')) return { texto: 'Concluída', classe: 'status-concluida' };
+    if (et === 'conferencia') return { texto: 'Em Conferência', classe: 'status-pulmao' };
+    return { texto: etapa || 'Desconhecido', classe: 'status-desconhecido' };
+}
+function buscarOP() {
+    const valor = document.getElementById('busca-op-input').value.trim();
+    const resDiv = document.getElementById('resultado-busca');
+    if (!valor) { resDiv.classList.remove('visivel'); return; }
+    const lista = carregarDados();
+    const valorNorm = normalizarNumero(valor);
+    const op = lista.find(item => {
+        const numItem = normalizarNumero(item.numero || item.op || item.N_OP);
+        return numItem === valorNorm || String(item.numero || '').trim() === valor;
+    });
+    if (!op) {
+        resDiv.innerHTML = `<div class="nao-encontrada">❌ OP "${valor}" não encontrada.</div>`;
+        resDiv.classList.add('visivel');
+        return;
+    }
+    const etapaInfo = obterNomeEtapa(op.etapa);
+    const destinoNome = NOMES_DESTINO[normalizarTexto(op.destino)] || op.destino || 'Não informado';
+    const numeroOP = op.numero || op.op || op.N_OP || '—';
+    const dataHora = op.horaSeparacao || op.data_hora || op['Data/Hora'] || op.horaInicio || '—';
+    const tempoProd = calcularTempoProducao(op.horaInicio, op.horaFim);
+    resDiv.innerHTML = `
+        <div class="linha"><span class="rot">Número da OP:</span> <strong>${numeroOP}</strong></div>
+        <div class="linha"><span class="rot">Destino:</span> ${destinoNome}</div>
+        <div class="linha"><span class="rot">Acabamento:</span> ${op.acabamento || '—'}</div>
+        <div class="linha"><span class="rot">Peso / Peças:</span> ${op.peso || '—'} kg / ${op.quantidadePecas || '—'} peças</div>
+        <div class="linha"><span class="rot">Data/Hora Entrada:</span> ${dataHora}</div>
+        <div class="linha"><span class="rot">Hora Início:</span> ${op.horaInicio || '—'}</div>
+        <div class="linha"><span class="rot">Hora Término:</span> ${op.horaFim || '—'}</div>
+        <div class="linha"><span class="rot">Tempo de Produção:</span> <span class="tempo-producao">${tempoProd}</span></div>
+        <div class="linha" style="margin-top: 0.6rem;">
+            <span class="rot">Status:</span>
+            <button class="status-busca ${etapaInfo.classe}" disabled>${etapaInfo.texto}</button>
+        </div>
+    `;
+    resDiv.classList.add('visivel');
+}
+
+// ✅ Função para LIMPAR e FECHAR a busca
+function fecharBusca() {
+    document.getElementById('busca-op-input').value = '';
+    document.getElementById('resultado-busca').classList.remove('visivel');
+}
+
+// ✅ ESC fecha a busca; Enter busca
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        fecharBusca();
+        return;
+    }
+    if (e.key === 'Enter' && document.activeElement.id === 'busca-op-input') {
+        buscarOP();
+    }
+});
+
+function atualizarPainel() {
+    const lista = carregarDados();
+    
+    document.getElementById('card-total').textContent = lista.length;
+    
+    const soConferencia = lista.filter(op => normalizarTexto(op.etapa) === 'conferencia').length;
+    document.getElementById('card-conferencia').textContent = soConferencia;
+    
+    const emProducao = lista.filter(op => op.etapa && normalizarTexto(op.etapa).endsWith('_em_producao')).length;
+    document.getElementById('card-producao').textContent = emProducao;
+    
+    const concluidas = lista.filter(op => op.etapa && normalizarTexto(op.etapa).endsWith('_concluida')).length;
+    document.getElementById('card-concluidas').textContent = concluidas;
+    
+    const setores = [
+        'pintura', 'sublimacao', 'polimento-manual', 'polimento-automatico',
+        'jateado', 'escovado', 'anodizacao', 'tinta-sobre-tinta'
+    ];
+    
+    setores.forEach(setor => {
+        const qtd = lista.filter(op => 
+            normalizarTexto(op.destino) === setor && 
+            normalizarTexto(op.etapa) === 'separacao'
+        ).length;
+        const el = document.getElementById(`pulmao-${setor}`);
+        if (el) el.textContent = qtd;
+    });
+}
+
+function irPara(setor) {
+    const mapaPaginas = {
+        'pintura': 'producao-pintura.html',
+        'sublimacao': 'producao-sublimacao.html',
+        'polimento-manual': 'producao-polimento-manual.html',
+        'polimento-automatico': 'producao-polimento-automatico.html',
+        'jateado': 'producao-jateado.html',
+        'escovado': 'producao-escovado.html',
+        'anodizacao': 'producao-anodizacao.html',
+        'tinta-sobre-tinta': 'producao-tinta-sobre-tinta.html'
+    };
+    window.location.href = mapaPaginas[setor] || '#';
+}
+
+CANAL.onmessage = () => atualizarPainel();
+window.addEventListener('storage', atualizarPainel);
+atualizarPainel();
+</script> <!-- COLOQUE ESTE BLOCO ANTES DO </body> -->
+<style>
+.sincro-bar{position:fixed;bottom:15px;right:15px;display:flex;gap:10px;z-index:999}
+.btn-sincro{padding:10px 16px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px}
+.btn-envia{background:#4CAF50;color:#fff}
+.btn-recebe{background:#2196F3;color:#fff}
+</style>
+<div class="sincro-bar">
+  <button class="btn-sincro btn-envia" onclick="exportarDados()">📤 Enviar</button>
+  <button class="btn-sincro btn-recebe" onclick="importarDados()">📥 Receber</button>
+</div>
+<script>
+function exportarDados() {
+  const dados = localStorage.getItem('dados_producao');
+  if (!dados) return alert('Nada para enviar!');
+  navigator.clipboard.writeText(dados)
+    .then(() => alert('✅ Copiado!\nVá no outro aparelho → clique em "📥 Receber"'))
+    .catch(() => prompt('Copie o texto:', dados));
+}
+function importarDados() {
+  const texto = prompt('Cole o texto aqui:');
+  if (!texto) return;
+  try { JSON.parse(texto); } catch { return alert('❌ Texto inválido!'); }
+  localStorage.setItem('dados_producao', texto);
+  alert('✅ Atualizado!');
+  atualizarPainel();
+}
+</script>
+</body>
+</html>

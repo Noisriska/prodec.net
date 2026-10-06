@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ÁREA DE SEPARAÇÃO — PULMÃO</title>
+    <style>
+        :root {
+            --bg-dark: #121212; --bg-card: #1e1e1e; --bg-hover: #2d2d2d;
+            --primary: #d4a017; --success: #4CAF50; --danger: #e53935;
+            --info: #0288d1; --text: #f0f0f0; --muted: #999; --border: #333;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: var(--bg-dark); color: var(--text); min-height: 100vh; padding: 1.5rem; }
+        .container { max-width: 1250px; margin: 0 auto; }
+        h1 { text-align: center; color: var(--primary); margin-bottom: 0.5rem; font-size: 1.8rem; }
+        .subtitulo { text-align: center; color: var(--muted); margin-bottom: 2rem; }
+        
+        .card { background: var(--bg-card); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border); }
+        .card h2 { font-size: 1.2rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); color: var(--primary); }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .campo { display: flex; flex-direction: column; gap: 0.3rem; }
+        label { font-size: 0.85rem; color: var(--muted); }
+        input { 
+            padding: 0.75rem; background: #252525; border: 1px solid #444; 
+            border-radius: 6px; color: var(--text); font-size: 1rem; outline: none;
+        }
+        input:focus { border-color: var(--primary); }
+        input:read-only { background: #1f1f1f; color: #888; cursor: not-allowed; }
+        
+        .botoes { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+        button { padding: 0.75rem 1.2rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        button:disabled { opacity: 0.35; cursor: not-allowed; }
+        button:hover:not(:disabled) { transform: translateY(-2px); }
+        .btn-localizar { background: var(--success); color: white; }
+        .btn-confirmar { background: var(--primary); color: #111; }
+        .btn-apagar { background: var(--danger); color: white; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+        th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        th { background: var(--bg-hover); color: var(--primary); font-weight: 600; }
+        tr:hover { background: var(--bg-hover); cursor: pointer; }
+        .status-badge {
+            display: inline-block; padding: 0.4rem 1rem; border-radius: 6px;
+            background: #2c5aa0; color: white; font-weight: 600; font-size: 0.85rem;
+        }
+        .destino-badge {
+            display: inline-block; padding: 0.3rem 0.8rem; border-radius: 6px;
+            background: var(--success); color: white; font-weight: 600; font-size: 0.85rem;
+        }
+        .vazio { text-align: center; color: var(--muted); padding: 2rem; }
+        .data-hora { color: var(--success); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📦 ÁREA DE SEPARAÇÃO — PULMÃO</h1>
+        <p class="subtitulo">Material Separado → Enviado ao Pulmão</p>
+
+        <!-- Confirmar Separação -->
+        <div class="card">
+            <h2>Confirmar Separação</h2>
+            <div class="grid">
+                <div class="campo">
+                    <label>Número da OP</label>
+                    <input type="text" id="campo-op" placeholder="003">
+                </div>
+                <div class="campo">
+                    <label>Destino / Pulmão</label>
+                    <input type="text" id="campo-destino" readonly placeholder="Automático">
+                </div>
+                <div class="campo">
+                    <label>Acabamento</label>
+                    <input type="text" id="campo-acab" readonly placeholder="9003">
+                </div>
+                <div class="campo">
+                    <label>Peso (kg)</label>
+                    <input type="number" id="campo-peso" readonly placeholder="125">
+                </div>
+                <div class="campo">
+                    <label>Quantidade de Peças</label>
+                    <input type="number" id="campo-qtd" readonly placeholder="45">
+                </div>
+            </div>
+            <div class="botoes">
+                <button class="btn-localizar" onclick="localizarOP()">🔍 Localizar OP</button>
+                <button class="btn-confirmar" id="btn-confirmar" onclick="confirmarSeparacao()" disabled>✅ Material Separado → Pulmão</button>
+                <button class="btn-apagar" id="btn-apagar" onclick="apagarRegistro()" disabled>🗑️ Apagar Registro</button>
+            </div>
+        </div>
+
+        <!-- Materiais no Pulmão -->
+        <div class="card">
+            <h2>📋 Materiais no Pulmão (Aguardando Produção)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nº OP</th>
+                        <th>Destino</th>
+                        <th>Acabamento</th>
+                        <th>Peso (kg)</th>
+                        <th>Peças</th>
+                        <th>Data/Hora Separação</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-pulmao"></tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+const STORAGE_KEY = 'dados_producao';
+
+const ETAPAS = {
+    CONFERENCIA: 'conferencia',
+    PULMAO: 'separacao'
+};
+
+const NOMES_DESTINO = {
+    'pintura': '🎨 Pintura',
+    'sublimacao': '🖼️ Sublimação',
+    'polimento-manual': '✨ Polimento Manual',
+    'polimento-automatico': '✨ Polimento Automático',
+    'jateado': '💨 Jateado',
+    'escovado': '🧹 Escovado',
+    'tinta-sobre-tinta': '🎨 Tinta sobre Tinta',
+    'anodizacao': '⚗️ Anodização'
+};
+
+const CANAL = new BroadcastChannel('producao_canal');
+let lista = [];
+let opSelecionada = null;
+
+function carregarDados() {
+    const bruto = localStorage.getItem(STORAGE_KEY);
+    lista = bruto ? JSON.parse(bruto) : [];
+    renderizarTabela();
+}
+
+function salvarDados() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+    CANAL.postMessage({ tipo: 'atualizar', origem: 'separacao' });
+    renderizarTabela();
+}
+
+function renderizarTabela() {
+    const noPulmao = lista.filter(o => o.etapa === ETAPAS.PULMAO);
+    document.getElementById('lista-pulmao').innerHTML = noPulmao.length
+        ? noPulmao.map(op => `
+            <tr onclick="carregarOP('${op.numero}')">
+                <td><strong>${op.numero}</strong></td>
+                <td><span class="destino-badge">${NOMES_DESTINO[op.destino] || op.destino || 'Não definido'}</span></td>
+                <td>${op.acabamento || '-'}</td>
+                <td>${op.peso || '-'}</td>
+                <td>${op.quantidadePecas || '-'}</td>
+                <td class="data-hora">${op.horaSeparacao || '-'}</td>
+                <td><span class="status-badge">Material no Pulmão</span></td>
+            </tr>
+        `).reverse().join('')
+        : '<tr><td colspan="7" class="vazio">Nenhum material no Pulmão</td></tr>';
+}
+
+function carregarOP(numero) {
+    const op = lista.find(o => o.numero === numero);
+    if (!op) return;
+    
+    opSelecionada = op;
+    
+    document.getElementById('campo-op').value = op.numero;
+    document.getElementById('campo-destino').value = NOMES_DESTINO[op.destino] || op.destino || 'Não definido';
+    document.getElementById('campo-acab').value = op.acabamento || '';
+    document.getElementById('campo-peso').value = op.peso || '';
+    document.getElementById('campo-qtd').value = op.quantidadePecas || '';
+    
+    document.getElementById('btn-confirmar').disabled = false;
+    document.getElementById('btn-apagar').disabled = false;
+}
+
+function localizarOP() {
+    const numero = document.getElementById('campo-op').value.trim();
+    if (!numero) return alert('Digite o número da OP!');
+    
+    const op = lista.find(o => o.numero === numero);
+    if (!op) return alert('OP não encontrada! Verifique se foi registrada na Conferência.');
+    
+    carregarOP(numero);
+}
+
+function confirmarSeparacao() {
+    if (!opSelecionada) return alert('Localize uma OP primeiro!');
+    
+    if (opSelecionada.etapa === ETAPAS.PULMAO) {
+        return alert(`OP ${opSelecionada.numero} já está no Pulmão!`);
+    }
+    if (opSelecionada.etapa !== ETAPAS.CONFERENCIA) {
+        return alert(`OP ${opSelecionada.numero} não está aguardando envio.`);
+    }
+    
+    opSelecionada.etapa = ETAPAS.PULMAO;
+    opSelecionada.horaSeparacao = new Date().toLocaleString('pt-BR');
+    
+    salvarDados();
+    alert(`✅ OP ${opSelecionada.numero} enviada ao Pulmão!\nDestino: ${NOMES_DESTINO[opSelecionada.destino] || opSelecionada.destino}`);
+    limparFormulario();
+}
+
+function apagarRegistro() {
+    if (!opSelecionada) return alert('Selecione uma OP primeiro!');
+    
+    if (confirm(`⚠️ Apagar OP ${opSelecionada.numero}?`)) {
+        const indice = lista.findIndex(o => o.numero === opSelecionada.numero);
+        if (indice !== -1) {
+            lista.splice(indice, 1);
+            salvarDados();
+            alert(`🗑️ OP ${opSelecionada.numero} removida!`);
+        }
+        limparFormulario();
+    }
+}
+
+function limparFormulario() {
+    opSelecionada = null;
+    document.getElementById('campo-op').value = '';
+    document.getElementById('campo-destino').value = '';
+    document.getElementById('campo-acab').value = '';
+    document.getElementById('campo-peso').value = '';
+    document.getElementById('campo-qtd').value = '';
+    document.getElementById('btn-confirmar').disabled = true;
+    document.getElementById('btn-apagar').disabled = true;
+}
+
+CANAL.onmessage = (event) => {
+    if (event.data.tipo === 'atualizar') carregarDados();
+};
+window.addEventListener('storage', (e) => {
+    if (e.key === STORAGE_KEY) carregarDados();
+});
+
+carregarDados();
+</script> <!-- ANTES DO </body> -->
+<style>
+.sincro-bar{position:fixed;bottom:15px;right:15px;display:flex;gap:10px;z-index:999}
+.btn-sincro{padding:10px 16px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px}
+.btn-envia{background:#4CAF50;color:#fff}
+.btn-recebe{background:#2196F3;color:#fff}
+</style>
+<div class="sincro-bar">
+  <button class="btn-sincro btn-envia" onclick="exportarDados()">📤 Enviar</button>
+  <button class="btn-sincro btn-recebe" onclick="importarDados()">📥 Receber</button>
+</div>
+<script>
+function exportarDados() {
+  const dados = localStorage.getItem('dados_producao');
+  if (!dados) return alert('Nada para enviar!');
+  navigator.clipboard.writeText(dados)
+    .then(() => alert('✅ Copiado!\nVá no outro aparelho → clique em "📥 Receber"'))
+    .catch(() => prompt('Copie o texto:', dados));
+}
+function importarDados() {
+  const texto = prompt('Cole o texto aqui:');
+  if (!texto) return;
+  try { JSON.parse(texto); } catch { return alert('❌ Texto inválido!'); }
+  localStorage.setItem('dados_producao', texto);
+  alert('✅ Atualizado!');
+  carregarDados();
+}
+</script>
+</body>
+</html>

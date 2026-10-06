@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PINTURA — Controle de Produção</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --card: #1e1e1e;
+            --text: #e0e0e0;
+            --muted: #999;
+            --pintura: #e91e63;
+            --em-producao: #ff9800;
+            --concluida: #4CAF50;
+            --pulmao: #2196f3;
+            --border: #333;
+            --linha-alt: #252525;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: var(--bg-dark); color: var(--text); padding: 2rem; min-height: 100vh; }
+        .container { max-width: 1600px; margin: 0 auto; }
+        h1 { text-align: center; color: var(--pintura); margin-bottom: 2rem; font-size: 1.8rem; }
+        .secao { background: var(--card); border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--border); }
+        .secao h2 { font-size: 1.1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .pulmao h2 { color: var(--pulmao); }
+        .producao h2 { color: var(--em-producao); }
+        .concluidas h2 { color: var(--concluida); }
+        table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+        th { text-align: left; padding: 0.75rem 0.5rem; color: var(--pulmao); font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 0.75rem 0.5rem; border-bottom: 1px solid #2a2a2a; }
+        tr:nth-child(even) td { background: var(--linha-alt); }
+        .vazio { text-align: center; color: var(--muted); padding: 2rem; }
+        .etiqueta { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-weight: 600; font-size: 0.85rem; }
+        .et-pintura { background: rgba(233,30,99,0.2); color: var(--pintura); }
+        .status-em { color: var(--em-producao); font-weight: 600; }
+        .status-concluida { color: var(--concluida); font-weight: 600; }
+        .tempo-producao { color: #ffd700; font-weight: 700; }
+        .form-linha { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1rem 0; align-items: flex-end; }
+        .grupo { flex: 1; min-width: 160px; }
+        .grupo label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.3rem; }
+        .grupo input { width: 100%; padding: 0.6rem 0.8rem; background: #2a2a2a; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.95rem; outline: none; }
+        .btn { padding: 0.7rem 1.2rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-lancar { background: #2e7d32; color: white; }
+        .btn-lancar:hover { background: #348e38; }
+        .btn-finalizar { background: #1976d2; color: white; }
+        .btn-finalizar:hover { background: #1987f0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 PINTURA — Controle de Produção</h1>
+
+        <!-- Materiais no Pulmão -->
+        <div class="secao pulmao">
+            <h2>🫁 Materiais no Pulmão — Aguardando Pintura</h2>
+            <table id="tabela-pulmao">
+                <thead>
+                    <tr>
+                        <th>Nº OP</th>
+                        <th>Destino</th>
+                        <th>Acabamento</th>
+                        <th>Peso (kg)</th>
+                        <th>Peças</th>
+                        <th>Data/Hora Separação</th>
+                        <th>Status</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="corpo-pulmao">
+                    <tr><td colspan="8" class="vazio">Nenhuma OP destinada à Pintura disponível no Pulmão</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Em Produção -->
+        <div class="secao producao">
+            <h2>⚙️ Em Produção — Pintura</h2>
+            <div class="form-linha">
+                <div class="grupo">
+                    <label>Número da OP</label>
+                    <input type="text" id="op-numero" placeholder="Digite a OP aqui">
+                </div>
+                <div class="grupo">
+                    <label>Destino</label>
+                    <input type="text" id="op-destino" readonly>
+                </div>
+                <div class="grupo">
+                    <label>Acabamento</label>
+                    <input type="text" id="op-acabamento" readonly>
+                </div>
+                <div class="grupo">
+                    <label>Peso (kg)</label>
+                    <input type="text" id="op-peso" readonly>
+                </div>
+                <div class="grupo">
+                    <label>Quantidade de Peças</label>
+                    <input type="text" id="op-pecas" readonly>
+                </div>
+            </div>
+            <div class="form-linha">
+                <button class="btn btn-lancar" onclick="lancarProducao()">▶ Lançar Produção</button>
+                <button class="btn btn-finalizar" onclick="finalizarProducao()">✅ Finalizar Pintura</button>
+            </div>
+            <table id="tabela-producao">
+                <thead>
+                    <tr>
+                        <th>Nº OP</th>
+                        <th>Destino</th>
+                        <th>Acabamento</th>
+                        <th>Peso (kg)</th>
+                        <th>Peças</th>
+                        <th>Início</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="corpo-producao">
+                    <tr><td colspan="7" class="vazio">Nenhuma OP em produção</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Concluídas -->
+        <div class="secao concluidas">
+            <h2>✅ Concluídas — Pintura</h2>
+            <table id="tabela-concluidas">
+                <thead>
+                    <tr>
+                        <th>Nº OP</th>
+                        <th>Destino</th>
+                        <th>Acabamento</th>
+                        <th>Peso (kg)</th>
+                        <th>Peças</th>
+                        <th>Início</th>
+                        <th>Término</th>
+                        <th>Tempo de Produção</th>
+                    </tr>
+                </thead>
+                <tbody id="corpo-concluidas">
+                    <tr><td colspan="8" class="vazio">Nenhuma OP concluída</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+const STORAGE_KEY = 'dados_producao';
+const SETOR_ATUAL = 'pintura';
+
+function carregarDados() {
+    const bruto = localStorage.getItem(STORAGE_KEY);
+    return bruto ? JSON.parse(bruto) : [];
+}
+function salvarDados(lista) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+    atualizarTodas();
+}
+function normalizarTexto(texto) {
+    if (!texto) return '';
+    return String(texto).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+// ✅ Cálculo de tempo corrigido e confiável
+function calcularTempo(inicioStr, fimStr) {
+    if (!inicioStr || !fimStr) return '-';
+    const inicio = new Date(inicioStr);
+    const fim = new Date(fimStr);
+    if (isNaN(inicio.getTime()) || isNaN(fim.getTime())) return '-';
+    
+    const diff = fim - inicio;
+    if (diff < 0) return '-';
+    
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+}
+
+function formatarDataHora(d) {
+    if (!d) return '-';
+    const data = new Date(d);
+    if (isNaN(data.getTime())) return d;
+    return data.toLocaleString('pt-BR', { 
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+}
+
+function atualizarPulmao() {
+    const lista = carregarDados();
+    const alvo = lista.filter(op => 
+        normalizarTexto(op.destino) === SETOR_ATUAL && 
+        normalizarTexto(op.etapa) === 'separacao'
+    );
+    const corpo = document.getElementById('corpo-pulmao');
+    if (!alvo.length) {
+        corpo.innerHTML = `<tr><td colspan="8" class="vazio">Nenhuma OP destinada à Pintura disponível no Pulmão</td></tr>`;
+        return;
+    }
+    corpo.innerHTML = alvo.map(op => `
+        <tr>
+            <td><strong>${op.numero}</strong></td>
+            <td><span class="etiqueta et-pintura">${op.destino}</span></td>
+            <td>${op.acabamento || '-'}</td>
+            <td>${op.peso || '-'}</td>
+            <td>${op.quantidadePecas || '-'}</td>
+            <td>${formatarDataHora(op.horaSeparacao || op.data_hora)}</td>
+            <td>Aguardando</td>
+            <td><button class="btn btn-lancar" onclick="pegarOP('${op.numero}')">Selecionar</button></td>
+        </tr>
+    `).join('');
+}
+
+function atualizarProducao() {
+    const lista = carregarDados();
+    const alvo = lista.filter(op => 
+        normalizarTexto(op.destino) === SETOR_ATUAL && 
+        normalizarTexto(op.etapa) === `${SETOR_ATUAL}_em_producao`
+    );
+    const corpo = document.getElementById('corpo-producao');
+    if (!alvo.length) {
+        corpo.innerHTML = `<tr><td colspan="7" class="vazio">Nenhuma OP em produção</td></tr>`;
+        return;
+    }
+    corpo.innerHTML = alvo.map(op => `
+        <tr>
+            <td><strong>${op.numero}</strong></td>
+            <td><span class="etiqueta et-pintura">${op.destino}</span></td>
+            <td>${op.acabamento || '-'}</td>
+            <td>${op.peso || '-'}</td>
+            <td>${op.quantidadePecas || '-'}</td>
+            <td>${formatarDataHora(op.horaInicio)}</td>
+            <td class="status-em">Em Produção</td>
+        </tr>
+    `).join('');
+}
+
+function atualizarConcluidas() {
+    const lista = carregarDados();
+    const alvo = lista.filter(op => 
+        normalizarTexto(op.destino) === SETOR_ATUAL && 
+        normalizarTexto(op.etapa) === `${SETOR_ATUAL}_concluida`
+    );
+    const corpo = document.getElementById('corpo-concluidas');
+    if (!alvo.length) {
+        corpo.innerHTML = `<tr><td colspan="8" class="vazio">Nenhuma OP concluída</td></tr>`;
+        return;
+    }
+    // ✅ Exibe o tempo calculado corretamente
+    corpo.innerHTML = alvo.map(op => {
+        const tempo = calcularTempo(op.horaInicio, op.horaFim);
+        return `
+        <tr>
+            <td><strong>${op.numero}</strong></td>
+            <td><span class="etiqueta et-pintura">${op.destino}</span></td>
+            <td>${op.acabamento || '-'}</td>
+            <td>${op.peso || '-'}</td>
+            <td>${op.quantidadePecas || '-'}</td>
+            <td>${formatarDataHora(op.horaInicio)}</td>
+            <td>${formatarDataHora(op.horaFim)}</td>
+            <td class="tempo-producao">${tempo}</td>
+        </tr>
+    `}).join('');
+}
+
+function atualizarTodas() {
+    atualizarPulmao();
+    atualizarProducao();
+    atualizarConcluidas();
+}
+
+function pegarOP(num) {
+    const lista = carregarDados();
+    const op = lista.find(x => x.numero === num);
+    if (!op) return;
+    document.getElementById('op-numero').value = op.numero;
+    document.getElementById('op-destino').value = op.destino || '';
+    document.getElementById('op-acabamento').value = op.acabamento || '';
+    document.getElementById('op-peso').value = op.peso || '';
+    document.getElementById('op-pecas').value = op.quantidadePecas || '';
+}
+
+function lancarProducao() {
+    const num = document.getElementById('op-numero').value.trim();
+    if (!num) { alert('Informe o número da OP'); return; }
+    const lista = carregarDados();
+    const idx = lista.findIndex(x => x.numero === num);
+    if (idx < 0) { alert('OP não encontrada'); return; }
+    
+    lista[idx].etapa = `${SETOR_ATUAL}_em_producao`;
+    lista[idx].horaInicio = new Date().toISOString();
+    salvarDados(lista);
+    limparFormulario();
+}
+
+function finalizarProducao() {
+    const num = document.getElementById('op-numero').value.trim();
+    if (!num) { alert('Informe o número da OP'); return; }
+    const lista = carregarDados();
+    const idx = lista.findIndex(x => x.numero === num);
+    if (idx < 0) { alert('OP não encontrada'); return; }
+    
+    lista[idx].etapa = `${SETOR_ATUAL}_concluida`;
+    lista[idx].horaFim = new Date().toISOString();
+    salvarDados(lista);
+    limparFormulario();
+}
+
+function limparFormulario() {
+    document.getElementById('op-numero').value = '';
+    document.getElementById('op-destino').value = '';
+    document.getElementById('op-acabamento').value = '';
+    document.getElementById('op-peso').value = '';
+    document.getElementById('op-pecas').value = '';
+}
+
+// Preenche dados de exemplo se não houver
+if (!localStorage.getItem(STORAGE_KEY)) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([
+        {
+            numero: '001',
+            destino: 'Pintura',
+            acabamento: 'VXS',
+            peso: 4324,
+            quantidadePecas: 424,
+            etapa: 'pintura_em_producao',
+            horaInicio: new Date('2026-10-04T21:21:56').toISOString()
+        },
+        {
+            numero: '002',
+            destino: 'Pintura',
+            acabamento: '9005',
+            peso: 542,
+            quantidadePecas: 425,
+            etapa: 'pintura_concluida',
+            horaInicio: new Date('2026-10-04T21:21:41').toISOString(),
+            horaFim: new Date('2026-10-04T21:26:52').toISOString()
+        }
+    ]));
+}
+
+window.addEventListener('storage', atualizarTodas);
+atualizarTodas();
+</script> <!-- ANTES DO </body> -->
+<style>
+.sincro-bar{position:fixed;bottom:15px;right:15px;display:flex;gap:10px;z-index:999}
+.btn-sincro{padding:10px 16px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px}
+.btn-envia{background:#4CAF50;color:#fff}
+.btn-recebe{background:#2196F3;color:#fff}
+</style>
+<div class="sincro-bar">
+  <button class="btn-sincro btn-envia" onclick="exportarDados()">📤 Enviar</button>
+  <button class="btn-sincro btn-recebe" onclick="importarDados()">📥 Receber</button>
+</div>
+<script>
+function exportarDados() {
+  const dados = localStorage.getItem('dados_producao');
+  if (!dados) return alert('Nada para enviar!');
+  navigator.clipboard.writeText(dados)
+    .then(() => alert('✅ Copiado!\nVá no outro aparelho → clique em "📥 Receber"'))
+    .catch(() => prompt('Copie o texto:', dados));
+}
+function importarDados() {
+  const texto = prompt('Cole o texto aqui:');
+  if (!texto) return;
+  try { JSON.parse(texto); } catch { return alert('❌ Texto inválido!'); }
+  localStorage.setItem('dados_producao', texto);
+  alert('✅ Atualizado!');
+  atualizarTodas();
+}
+</script>
+</body>
+</html>

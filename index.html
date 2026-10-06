@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAINEL DE NAVEGAÇÃO</title>
+<style>
+body{background:#0a0a0a;color:#fff;font-family:Arial,sans-serif;padding:20px;text-align:center}
+h1{color:#ffd700}
+.botao{background:#1a1a1a;border:2px solid #444;border-radius:10px;padding:20px;color:#fff;font-size:16px;font-weight:bold;width:220px;margin:8px;cursor:pointer}
+.botao:hover{border-color:#ffd700}
+.aviso{color:#ff4444;margin:10px 0;display:none}
+.campo{padding:12px;font-size:18px;width:200px;background:#000;border:1px solid #666;color:#fff;border-radius:6px;margin:10px}
+.entrar{background:#ffd700;color:#000;border:none;padding:12px 25px;font-weight:bold;border-radius:6px;cursor:pointer;font-size:16px}
+.sincro-bar{position:fixed;bottom:15px;right:15px;display:flex;gap:10px;z-index:999}
+.btn-sincro{padding:10px 16px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px}
+.btn-envia{background:#4CAF50;color:#fff}
+.btn-recebe{background:#2196F3;color:#fff}
+</style>
+</head>
+<body>
+<h1>🏭 PAINEL DE NAVEGAÇÃO</h1>
+<p style="color:#aaa">Escolha o setor e digite a senha:</p>
+<div id="botoes">
+<p><b>📊 Painéis Principais</b></p>
+<button class="botao" onclick="escolher('painel-central.html','1234')">📈 Painel Central</button>
+<button class="botao" onclick="escolher('conferencia.html','5678')">✅ Conferência</button>
+<button class="botao" onclick="escolher('separacao.html','9012')">📦 Pulmão / Separação</button>
+<p style="margin-top:25px;color:#aaa"><b>⚙️ Setores de Produção</b></p>
+<button class="botao" onclick="escolher('producao-pintura.html','3456')">🎨 Pintura</button>
+<button class="botao" onclick="escolher('producao-sublimacao.html','7890')">🖼️ Sublimação</button>
+<button class="botao" onclick="escolher('producao-polimento-manual.html','2345')">✨ Polimento Manual</button>
+<button class="botao" onclick="escolher('producao-polimento-automatico.html','6789')">💎 Polimento Automático</button>
+<button class="botao" onclick="escolher('producao-jateado.html','0123')">💨 Jateado</button>
+<button class="botao" onclick="escolher('producao-escovado.html','4567')">🧹 Escovado</button>
+<button class="botao" onclick="escolher('producao-anodizacao.html','8901')">⚗️ Anodização</button>
+<button class="botao" onclick="escolher('producao-tinta-sobre-tinta.html','5432')">🎨 Tinta sobre Tinta</button>
+</div>
+<div id="senhaarea" style="display:none;margin-top:30px">
+<h3 id="nome"></h3>
+<input type="password" id="camposenha" class="campo" placeholder="Digite a senha">
+<br>
+<button class="entrar" onclick="verificar()">Entrar</button>
+<div class="aviso" id="erro">❌ Senha errada! Tente novamente.</div>
+<br><br>
+<button class="botao" onclick="voltar()">← Voltar</button>
+</div>
+
+<!-- BOTÕES DE SINCRONIZAÇÃO -->
+<div class="sincro-bar">
+  <button class="btn-sincro btn-envia" onclick="exportarDados()">📤 Enviar</button>
+  <button class="btn-sincro btn-recebe" onclick="importarDados()">📥 Receber</button>
+</div>
+
+<script>
+let destino = "";
+let senhacorreta = "";
+function escolher(pagina, senha) {
+    destino = pagina;
+    senhacorreta = senha;
+    document.getElementById('botoes').style.display = 'none';
+    document.getElementById('senhaarea').style.display = 'block';
+    document.getElementById('nome').innerText = pagina.replace('.html','');
+    document.getElementById('camposenha').value = '';
+    document.getElementById('erro').style.display = 'none';
+    document.getElementById('camposenha').focus();
+}
+function voltar() {
+    document.getElementById('senhaarea').style.display = 'none';
+    document.getElementById('botoes').style.display = 'block';
+    destino = "";
+    senhacorreta = "";
+}
+function verificar() {
+    let d = document.getElementById('camposenha').value;
+    if (d === senhacorreta) {
+        window.location.href = destino;
+    } else {
+        document.getElementById('erro').style.display = 'block';
+        document.getElementById('camposenha').value = '';
+        document.getElementById('camposenha').focus();
+    }
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && destino !== "") {
+        verificar();
+    }
+});
+
+// === SINCRONIZAÇÃO ===
+function exportarDados() {
+  const dados = localStorage.getItem('dados_producao');
+  if (!dados) return alert('Nada para enviar! Cadastre uma OP primeiro.');
+  navigator.clipboard.writeText(dados)
+    .then(() => alert('✅ Copiado!\nVá no outro aparelho → clique em "📥 Receber" → cole o texto lá'))
+    .catch(() => prompt('Copie o texto abaixo:', dados));
+}
+function importarDados() {
+  const texto = prompt('Cole o texto que veio do outro aparelho:');
+  if (!texto) return;
+  try { JSON.parse(texto); } catch { return alert('❌ Texto inválido! Copie novamente.'); }
+  localStorage.setItem('dados_producao', texto);
+  alert('✅ Atualizado! Recarregue as páginas do site para ver tudo.');
+  location.reload();
+}
+</script>
+</body>
+</html>

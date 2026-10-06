@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conferência — Controle de Produção</title>
+    <style>
+        :root {
+            --bg-dark: #121212; --bg-card: #1e1e1e; --bg-hover: #2d2d2d;
+            --primary: #2c5aa0; --secondary: #4CAF50; --warning: #FF9800;
+            --danger: #f44336; --text: #f0f0f0; --muted: #b0b0b0; --border: #333;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: var(--bg-dark); color: var(--text); min-height: 100vh; padding: 1rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { text-align: center; padding: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
+        header h1 { font-size: 1.8rem; color: var(--primary); margin-bottom: 0.5rem; }
+        .card { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .card h2 { font-size: 1.3rem; margin-bottom: 1rem; color: var(--primary); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+        label { font-size: 0.9rem; color: var(--muted); }
+        input, select { 
+            padding: 0.8rem 1rem; border: 1px solid var(--border); border-radius: 6px; 
+            background: var(--bg-dark); color: var(--text); font-size: 1rem; outline: none;
+        }
+        select { cursor: pointer; }
+        button { padding: 0.8rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        button.primario { background: var(--secondary); color: white; }
+        button.aviso { background: var(--warning); color: #222; }
+        button.perigo { background: var(--danger); color: white; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+        .botoes { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .table-wrapper { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.9rem; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: var(--bg-hover); font-weight: 600; color: var(--primary); }
+        tr:hover { background: var(--bg-hover); }
+        .vazio { text-align: center; color: var(--muted); padding: 2rem; }
+        .sincronia { position: fixed; top: 10px; right: 10px; padding: 0.5rem 1rem; background: var(--bg-card); border-radius: 20px; font-size: 0.85rem; color: var(--secondary); z-index: 100; }
+        .status-lote { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 20px; font-weight: 600; font-size: 0.85rem; background: #2c5aa0; }
+        .destino-badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: 4px; background: var(--secondary); color: white; font-weight: 600; font-size: 0.8rem; }
+        .data-hora { color: var(--secondary); font-size: 0.9rem; }
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.4rem; }
+            th, td { padding: 0.7rem 0.5rem; font-size: 0.9rem; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sincronia" id="sincro">✅ Sincronizado</div>
+    <div class="container">
+        <header>
+            <h1>✅ ÁREA DE CONFERÊNCIA</h1>
+            <p>Registro de Ordem de Produção — Acompanhamento até envio ao Pulmão</p>
+        </header>
+        <div class="card">
+            <h2>Registrar Conferência</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Número da OP</label>
+                    <input type="text" id="conf-op" placeholder="OP-001">
+                </div>
+                <div class="form-group">
+                    <label>Acabamento</label>
+                    <input type="text" id="conf-acabamento" placeholder="Ex: Brilhante, Fosco...">
+                </div>
+                <div class="form-group">
+                    <label>Peso (kg)</label>
+                    <input type="number" step="0.01" id="conf-peso" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>Quantidade de Peças</label>
+                    <input type="number" id="conf-quantidade" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>Destino / Pulmão</label>
+                    <select id="conf-destino">
+                        <option value="">Selecione...</option>
+                        <option value="pintura">🎨 Pintura</option>
+                        <option value="sublimacao">🖼️ Sublimação</option>
+                        <option value="polimento-manual">✨ Polimento Manual</option>
+                        <option value="polimento-automatico">✨ Polimento Automático</option>
+                        <option value="jateado">💨 Jateado</option>
+                        <option value="escovado">🧹 Escovado</option>
+                        <option value="tinta-sobre-tinta">🎨 Tinta sobre Tinta</option>
+                        <option value="anodizacao">⚗️ Anodização</option>
+                    </select>
+                </div>
+            </div>
+            <div class="botoes">
+                <button class="primario" onclick="registrar()">✅ Confirmar Conferência</button>
+                <button class="aviso" onclick="corrigir()">🔧 Corrigir Dados</button>
+                <button class="perigo" onclick="apagar()">🗑️ Apagar Registro</button>
+            </div>
+        </div>
+        <div class="card">
+            <h2>📋 Ordens de Produção no Lote — Aguardando Envio ao Pulmão</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nº OP</th>
+                            <th>Acabamento</th>
+                            <th>Peso (kg)</th>
+                            <th>Peças</th>
+                            <th>Destino</th>
+                            <th>Data/Hora Conferência</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        const CANAL = new BroadcastChannel('producao_canal');
+        let ordens = [];
+        const ETAPAS = {
+            CRIADA: 'criada',
+            CONFERENCIA: 'conferencia',
+            SEPARACAO: 'separacao',
+            PRODUCAO_INICIO: 'producao-inicio',
+            PRODUCAO_REFORMA: 'producao-reforma',
+            PRODUCAO_FIM: 'producao-fim'
+        };
+
+        // Nomes para exibição
+        const NOMES_DESTINO = {
+            'pintura': '🎨 Pintura',
+            'sublimacao': '🖼️ Sublimação',
+            'polimento-manual': '✨ Polimento Manual',
+            'polimento-automatico': '✨ Polimento Automático',
+            'jateado': '💨 Jateado',
+            'escovado': '🧹 Escovado',
+            'tinta-sobre-tinta': '🎨 Tinta sobre Tinta',
+            'anodizacao': '⚗️ Anodização'
+        };
+        
+        function carregar() {
+            const d = localStorage.getItem('dados_producao');
+            ordens = d ? JSON.parse(d) : [];
+            atualizar();
+        }
+        
+        function salvar() {
+            localStorage.setItem('dados_producao', JSON.stringify(ordens));
+            CANAL.postMessage({ tipo: 'atualizar', origem: 'conferencia' });
+            atualizar();
+        }
+        
+        function registrar() {
+            const num = document.getElementById('conf-op').value.trim().toUpperCase();
+            const acabamento = document.getElementById('conf-acabamento').value.trim();
+            const peso = parseFloat(document.getElementById('conf-peso').value);
+            const qtd = parseInt(document.getElementById('conf-quantidade').value);
+            const destino = document.getElementById('conf-destino').value;
+            const dataHora = new Date().toLocaleString('pt-BR');
+            
+            if (!num || !acabamento || !peso || !qtd) {
+                return alert('Preencha TODOS os campos!');
+            }
+            if (!destino) {
+                return alert('Selecione o Destino / Pulmão!');
+            }
+            
+            let op = ordens.find(o => o.numero === num);
+            if (op) {
+                if (op.etapa === ETAPAS.SEPARACAO || op.etapa === ETAPAS.PRODUCAO_INICIO || op.etapa === ETAPAS.PRODUCAO_REFORMA || op.etapa === ETAPAS.PRODUCAO_FIM) {
+                    return alert('OP já avançou — não pode ser alterada aqui!');
+                }
+                op.acabamento = acabamento;
+                op.peso = peso;
+                op.quantidadePecas = qtd;
+                op.destino = destino;
+                op.conferenciaEm = dataHora;
+                op.etapa = ETAPAS.CONFERENCIA;
+            } else {
+                ordens.push({
+                    id: Date.now(),
+                    numero: num,
+                    acabamento: acabamento,
+                    data: new Date().toISOString().split('T')[0],
+                    peso: peso,
+                    quantidadePecas: qtd,
+                    destino: destino,
+                    etapa: ETAPAS.CONFERENCIA,
+                    conferenciaEm: dataHora,
+                    separacaoEm: null,
+                    producaoInicio: null,
+                    producaoFim: null
+                });
+            }
+            
+            limparCampos();
+            salvar();
+            alert(`✅ OP ${num} — Ordem de Produção registrada!\nDestino: ${NOMES_DESTINO[destino]}\nAguardando envio ao Pulmão.`);
+        }
+        
+        function corrigir() {
+            const num = document.getElementById('conf-op').value.trim().toUpperCase();
+            if (!num) return alert('Digite o Número da OP para corrigir!');
+            
+            const op = ordens.find(o => o.numero === num);
+            if (!op) return alert('OP não encontrada!');
+            if (op.etapa !== ETAPAS.CONFERENCIA) {
+                return alert('OP já foi enviada ao Pulmão ou avançou — não é possível corrigir!');
+            }
+            
+            document.getElementById('conf-acabamento').value = op.acabamento || '';
+            document.getElementById('conf-peso').value = op.peso;
+            document.getElementById('conf-quantidade').value = op.quantidadePecas;
+            document.getElementById('conf-destino').value = op.destino || '';
+            alert(`Dados carregados para OP ${num}.\nFaça as alterações e clique em "Confirmar Conferência" para salvar.`);
+        }
+        
+        function apagar() {
+            const num = document.getElementById('conf-op').value.trim().toUpperCase();
+            if (!num) return alert('Digite o Número da OP para apagar!');
+            
+            const indice = ordens.findIndex(o => o.numero === num);
+            if (indice === -1) return alert('OP não encontrada!');
+            if (ordens[indice].etapa !== ETAPAS.CONFERENCIA) {
+                return alert('OP já foi enviada ao Pulmão ou avançou — não pode ser apagada!');
+            }
+            
+            if (confirm(`⚠️ Tem certeza que deseja APAGAR a OP ${num}?\nEsta ação não pode ser desfeita!`)) {
+                ordens.splice(indice, 1);
+                limparCampos();
+                salvar();
+                alert(`🗑️ OP ${num} removida!`);
+            }
+        }
+        
+        function limparCampos() {
+            document.getElementById('conf-op').value = '';
+            document.getElementById('conf-acabamento').value = '';
+            document.getElementById('conf-peso').value = '';
+            document.getElementById('conf-quantidade').value = '';
+            document.getElementById('conf-destino').value = '';
+        }
+        
+        function atualizar() {
+            const naConferencia = ordens.filter(o => o.etapa === ETAPAS.CONFERENCIA);
+            document.getElementById('lista').innerHTML = naConferencia.length
+                ? naConferencia.map(op => `
+                    <tr>
+                        <td><strong>${op.numero}</strong></td>
+                        <td>${op.acabamento || '-'}</td>
+                        <td>${op.peso}</td>
+                        <td>${op.quantidadePecas}</td>
+                        <td><span class="destino-badge">${NOMES_DESTINO[op.destino] || op.destino || 'Não definido'}</span></td>
+                        <td class="data-hora">${op.conferenciaEm}</td>
+                        <td><span class="status-lote">Ordem de Produção no Lote</span></td>
+                    </tr>
+                `).reverse().join('')
+                : '<tr><td colspan="7" class="vazio">Nenhuma Ordem de Produção aguardando envio ao Pulmão</td></tr>';
+        }
+        
+        CANAL.onmessage = (m) => { 
+            if (m.data.tipo === 'atualizar') carregar(); 
+        };
+        
+        window.onstorage = (e) => { 
+            if (e.key === 'dados_producao') carregar(); 
+        };
+        
+        carregar();
+    </script> <!-- ANTES DO </body> -->
+<style>
+.sincro-bar{position:fixed;bottom:15px;right:15px;display:flex;gap:10px;z-index:999}
+.btn-sincro{padding:10px 16px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px}
+.btn-envia{background:#4CAF50;color:#fff}
+.btn-recebe{background:#2196F3;color:#fff}
+</style>
+<div class="sincro-bar">
+  <button class="btn-sincro btn-envia" onclick="exportarDados()">📤 Enviar</button>
+  <button class="btn-sincro btn-recebe" onclick="importarDados()">📥 Receber</button>
+</div>
+<script>
+function exportarDados() {
+  const dados = localStorage.getItem('dados_producao');
+  if (!dados) return alert('Nada para enviar!');
+  navigator.clipboard.writeText(dados)
+    .then(() => alert('✅ Copiado!\nVá no outro aparelho → clique em "📥 Receber"'))
+    .catch(() => prompt('Copie o texto:', dados));
+}
+function importarDados() {
+  const texto = prompt('Cole o texto aqui:');
+  if (!texto) return;
+  try { JSON.parse(texto); } catch { return alert('❌ Texto inválido!'); }
+  localStorage.setItem('dados_producao', texto);
+  alert('✅ Atualizado!');
+  carregar();
+}
+</script>
+</body>
+</html>
